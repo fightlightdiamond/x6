@@ -22,6 +22,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 /* Điểm neo (port) cần vị trí tuyệt đối chính xác — không thể dùng Tailwind */
 .node-port {
   @apply absolute w-3 h-3 bg-white rounded-full cursor-crosshair;
