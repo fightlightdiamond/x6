@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import Graph from './Graph.vue';
+import Graph from './Graph.client.vue';
 
 const meta = {
   title: 'X6 Layouts/Bức Tranh Tổng Thể (Graph Viewer)',
