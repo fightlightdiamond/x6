@@ -71,21 +71,52 @@ onMounted(() => {
 </script>
 
 <style>
-/* CSS Keyframes toàn cục để điều khiển animation chạy dọc đường truyền */
+/* ── Pipe flow animations — luôn chạy, không cần toggle ─────────────────── */
+
+/* Dòng chảy chính: dash chạy từ source → target */
+@keyframes pipe-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* Highlight shimmer: opacity + offset nhấp nháy */
+@keyframes pipe-shimmer {
+  0% {
+    stroke-dashoffset: 0;
+    stroke-opacity: 0.5;
+  }
+
+  50% {
+    stroke-dashoffset: -30;
+    stroke-opacity: 0.85;
+  }
+
+  100% {
+    stroke-dashoffset: -60;
+    stroke-opacity: 0.5;
+  }
+}
+
+/* Signal flow: dash nhỏ chạy nhanh */
+@keyframes signal-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+
+/* Legacy fallback */
 @keyframes ant-line {
   to {
     stroke-dashoffset: -1000;
   }
-}
-
-/* Flow animation cho Industrial ESP edges (-40 offset, nhanh hơn ant-line) */
-@keyframes flow-dash {
-  to {
-    stroke-dashoffset: -40;
-  }
-}
-
-.flow-active line {
-  animation: flow-dash 1s linear infinite;
 }
 </style>

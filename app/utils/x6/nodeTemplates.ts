@@ -241,34 +241,142 @@ export const createNodeConfig = (type: string, labelName: string) => {
 };
 
 /**
- * Tạo cấu hình edge công nghiệp (đường ống / tín hiệu) cho AntV X6.
- *
- * @param type - Loại đường:
- *   - `'gas'`       — Ống khí chính (xám đậm, stroke-width 4, dash 8 4)
- *   - `'clean-air'` — Ống khí sạch (xanh dương, stroke-width 3, dash 6 3)
- *   - `'signal'`    — Đường tín hiệu điều khiển (vàng, stroke-width 2, dash 4 4)
+ * Tạo cấu hình edge công nghiệp cho AntV X6.
+ * Double-stroke pipe + flow animation luôn chạy theo hướng source→target.
  */
 export const createIndustrialEdge = (
-  type: "gas" | "clean-air" | "signal" = "gas",
+  type:
+    | "gas"
+    | "clean-air"
+    | "clean-air-main"
+    | "drain"
+    | "signal"
+    | "power" = "clean-air",
 ) => {
-  const styles = {
-    gas: { stroke: "#475569", strokeWidth: 5, dasharray: "0" },
-    "clean-air": { stroke: "#2563eb", strokeWidth: 4, dasharray: "0" },
-    signal: { stroke: "#d97706", strokeWidth: 2, dasharray: "4 3" },
+  if (type === "signal") {
+    return {
+      shape: "edge",
+      router: { name: "manhattan" },
+      connector: { name: "rounded", args: { radius: 4 } },
+      attrs: {
+        line: {
+          stroke: "#d97706",
+          strokeWidth: 1.5,
+          strokeDasharray: "5 3",
+          targetMarker: null,
+          strokeLinecap: "round",
+          style: "animation: signal-flow 1.5s linear infinite",
+        },
+      },
+      data: { edgeType: type, flowActive: true },
+    };
+  }
+
+  if (type === "power") {
+    return {
+      shape: "edge",
+      router: { name: "manhattan" },
+      connector: { name: "rounded", args: { radius: 4 } },
+      attrs: {
+        line: {
+          stroke: "#dc2626",
+          strokeWidth: 2,
+          strokeDasharray: "6 2 2 2",
+          targetMarker: null,
+          strokeLinecap: "round",
+        },
+      },
+      data: { edgeType: type, flowActive: false },
+    };
+  }
+
+  // Pipe styles: outer = thân ống đậm, inner = highlight sáng
+  const pipes: Record<
+    string,
+    {
+      outer: string;
+      inner: string;
+      outerW: number;
+      innerW: number;
+      radius: number;
+      speed: string;
+    }
+  > = {
+    "clean-air-main": {
+      outer: "#1e3a8a",
+      inner: "#60a5fa",
+      outerW: 10,
+      innerW: 3,
+      radius: 16,
+      speed: "0.5s",
+    },
+    "clean-air": {
+      outer: "#1d4ed8",
+      inner: "#7dd3fc",
+      outerW: 7,
+      innerW: 2,
+      radius: 10,
+      speed: "0.7s",
+    },
+    gas: {
+      outer: "#1e293b",
+      inner: "#94a3b8",
+      outerW: 8,
+      innerW: 2,
+      radius: 10,
+      speed: "0.9s",
+    },
+    drain: {
+      outer: "#0e7490",
+      inner: "#67e8f9",
+      outerW: 5,
+      innerW: 1.5,
+      radius: 6,
+      speed: "1.1s",
+    },
   };
-  const s = styles[type];
+
+  const p = pipes[type] ?? pipes["clean-air"]!;
+
   return {
     shape: "edge",
     router: { name: "manhattan" },
-    connector: { name: "rounded", args: { radius: 8 } },
+    connector: { name: "rounded", args: { radius: p.radius } },
+    markup: [
+      {
+        tagName: "path",
+        selector: "outerLine",
+        attrs: { fill: "none", "pointer-events": "none" },
+      },
+      {
+        tagName: "path",
+        selector: "innerLine",
+        attrs: { fill: "none", "pointer-events": "none" },
+      },
+    ],
     attrs: {
-      line: {
-        stroke: s.stroke,
-        strokeWidth: s.strokeWidth,
-        strokeDasharray: s.dasharray,
+      outerLine: {
+        connection: true,
+        stroke: p.outer,
+        strokeWidth: p.outerW,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
         targetMarker: null,
+        strokeDasharray: "16 8",
+        style: `animation: pipe-flow ${p.speed} linear infinite`,
+      },
+      innerLine: {
+        connection: true,
+        stroke: p.inner,
+        strokeWidth: p.innerW,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        strokeOpacity: 0.65,
+        targetMarker: null,
+        strokeDasharray: "40 20",
+        style: `animation: pipe-shimmer ${p.speed} linear infinite`,
       },
     },
-    data: { edgeType: type, flowActive: false },
+    data: { edgeType: type, flowActive: true },
   };
 };

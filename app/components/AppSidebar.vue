@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useX6Graph } from '../composables/useX6Graph';
 import { createNodeConfig } from '../utils/x6/nodeTemplates';
 import { ESP_TEMPLATES } from '../utils/x6/espTemplates';
@@ -127,12 +127,21 @@ const startDrag = (e: MouseEvent, type: string, labelName: string) => {
 
 const pendingTemplate = ref<string | null>(null);
 
-const loadTemplate = (templateId: string) => {
+const loadTemplate = async (templateId: string) => {
   const graph = getGraph();
   if (!graph) return;
   const tpl = ESP_TEMPLATES[templateId];
   if (!tpl) return;
-  tpl.load(graph);
+
   pendingTemplate.value = null;
+
+  // Clear canvas và đợi Vue unmount xong hoàn toàn
+  graph.clearCells();
+
+  // 100ms đủ để Vue destroy tất cả component instances trong TeleportContainer
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Load template — bên trong cũng gọi clearCells() nhưng canvas đã trống
+  tpl.load(graph);
 };
 </script>

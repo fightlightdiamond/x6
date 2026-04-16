@@ -10,6 +10,7 @@ import StaticEquipmentNode from "../../components/StaticEquipmentNode.vue";
 
 /**
  * PORT_GROUPS dùng chung cho tất cả industrial shape (top/bottom/left/right).
+ * Ports ẩn mặc định, chỉ hiện khi hover vào node.
  */
 const PORT_GROUPS = {
   groups: {
@@ -22,6 +23,7 @@ const PORT_GROUPS = {
           stroke: "#5F95FF",
           strokeWidth: 1,
           fill: "#fff",
+          visibility: "hidden",
         },
       },
     },
@@ -34,6 +36,7 @@ const PORT_GROUPS = {
           stroke: "#5F95FF",
           strokeWidth: 1,
           fill: "#fff",
+          visibility: "hidden",
         },
       },
     },
@@ -46,6 +49,7 @@ const PORT_GROUPS = {
           stroke: "#5F95FF",
           strokeWidth: 1,
           fill: "#fff",
+          visibility: "hidden",
         },
       },
     },
@@ -58,6 +62,7 @@ const PORT_GROUPS = {
           stroke: "#5F95FF",
           strokeWidth: 1,
           fill: "#fff",
+          visibility: "hidden",
         },
       },
     },
@@ -66,10 +71,17 @@ const PORT_GROUPS = {
 
 /**
  * Đăng ký tất cả các Vue Shape sử dụng trong X6 Graph.
- * Gọi hàm này 1 lần duy nhất ngay khi khởi tạo Graph thành công lần đầu.
+ * Idempotent — gọi nhiều lần không crash.
  */
 export function registerAllVueNodes() {
-  register({
+  function safeRegister(config: Parameters<typeof register>[0]) {
+    try {
+      register(config);
+    } catch {
+      // Shape đã được register — bỏ qua
+    }
+  }
+  safeRegister({
     shape: "my-vue-shape",
     width: 150,
     height: 50,
@@ -77,7 +89,7 @@ export function registerAllVueNodes() {
   });
 
   // Backward compat: giữ nguyên shape cũ 'filter-tank-node'
-  register({
+  safeRegister({
     shape: "filter-tank-node",
     width: 100,
     height: 120,
@@ -85,7 +97,7 @@ export function registerAllVueNodes() {
   });
 
   // Shape mới 'esp-filter-tank' (100×140) thay thế filter-tank-node
-  register({
+  safeRegister({
     shape: "esp-filter-tank",
     width: 100,
     height: 140,
@@ -93,7 +105,7 @@ export function registerAllVueNodes() {
     ports: PORT_GROUPS,
   });
 
-  register({
+  safeRegister({
     shape: "computer-device-node",
     width: 180,
     height: 80,
@@ -154,7 +166,7 @@ export function registerAllVueNodes() {
 
   // ── Industrial ESP shapes ──────────────────────────────────────────────
 
-  register({
+  safeRegister({
     shape: "motor-blower",
     width: 110,
     height: 92,
@@ -162,7 +174,7 @@ export function registerAllVueNodes() {
     ports: PORT_GROUPS,
   });
 
-  register({
+  safeRegister({
     shape: "control-valve",
     width: 60,
     height: 70,
@@ -170,7 +182,7 @@ export function registerAllVueNodes() {
     ports: PORT_GROUPS,
   });
 
-  register({
+  safeRegister({
     shape: "data-tag",
     width: 90,
     height: 44,
@@ -178,7 +190,7 @@ export function registerAllVueNodes() {
     ports: PORT_GROUPS,
   });
 
-  register({
+  safeRegister({
     shape: "indicator-light",
     width: 60,
     height: 70,
@@ -186,11 +198,77 @@ export function registerAllVueNodes() {
     ports: PORT_GROUPS,
   });
 
-  register({
+  safeRegister({
     shape: "static-equipment",
     width: 80,
     height: 120,
     component: StaticEquipmentNode,
     ports: PORT_GROUPS,
+  });
+
+  // Chimney: shape riêng với port positions tùy chỉnh
+  // SVG chimney cao 160px, khói ở trên (~25px), thân từ y=25 đến y=150, chân đế y=150-154
+  // Port left/right đặt ở giữa thân (y=50%), top ở miệng ống (y=15%), bottom ở chân đế (y=95%)
+  safeRegister({
+    shape: "static-equipment-chimney",
+    width: 60,
+    height: 160,
+    component: StaticEquipmentNode,
+    ports: {
+      groups: {
+        top: {
+          position: { name: "absolute", args: { x: "50%", y: "15%" } },
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: "#5F95FF",
+              strokeWidth: 1,
+              fill: "#fff",
+              visibility: "hidden",
+            },
+          },
+        },
+        bottom: {
+          position: { name: "absolute", args: { x: "50%", y: "95%" } },
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: "#5F95FF",
+              strokeWidth: 1,
+              fill: "#fff",
+              visibility: "hidden",
+            },
+          },
+        },
+        left: {
+          position: { name: "absolute", args: { x: "15%", y: "55%" } },
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: "#5F95FF",
+              strokeWidth: 1,
+              fill: "#fff",
+              visibility: "hidden",
+            },
+          },
+        },
+        right: {
+          position: { name: "absolute", args: { x: "85%", y: "55%" } },
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: "#5F95FF",
+              strokeWidth: 1,
+              fill: "#fff",
+              visibility: "hidden",
+            },
+          },
+        },
+      },
+    },
   });
 }

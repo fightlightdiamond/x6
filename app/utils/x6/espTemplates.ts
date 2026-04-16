@@ -44,7 +44,13 @@ function edge(
   sourcePort: string,
   targetCell: string,
   targetPort: string,
-  type: "clean-air" | "gas" | "signal" = "clean-air",
+  type:
+    | "clean-air-main"
+    | "clean-air"
+    | "gas"
+    | "drain"
+    | "signal"
+    | "power" = "clean-air",
 ) {
   graph.addEdge({
     ...createIndustrialEdge(type),
@@ -58,7 +64,7 @@ function edge(
 // ─────────────────────────────────────────────────────────────────────────────
 
 function loadTwoStageFull(graph: any) {
-  graph.clearCells();
+  if (graph.getNodes().length > 0) graph.clearCells();
 
   // Stage II — 4 bồn lọc + hopper
   for (let i = 1; i <= 4; i++) {
@@ -191,7 +197,7 @@ function loadTwoStageFull(graph: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function loadSingleStage(graph: any) {
-  graph.clearCells();
+  if (graph.getNodes().length > 0) graph.clearCells();
 
   // 2 bồn lọc
   graph.addNode({
@@ -278,7 +284,7 @@ function loadSingleStage(graph: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function loadParallelLines(graph: any) {
-  graph.clearCells();
+  if (graph.getNodes().length > 0) graph.clearCells();
 
   // Dây chuyền A (trên)
   for (let i = 1; i <= 3; i++) {
@@ -408,7 +414,7 @@ function loadParallelLines(graph: any) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function loadMonitoringStation(graph: any) {
-  graph.clearCells();
+  if (graph.getNodes().length > 0) graph.clearCells();
 
   const tags = [
     {
@@ -615,7 +621,13 @@ function e(
   sp: string,
   t: string,
   tp: string,
-  type: "clean-air" | "gas" | "signal" = "clean-air",
+  type:
+    | "clean-air-main"
+    | "clean-air"
+    | "gas"
+    | "drain"
+    | "signal"
+    | "power" = "clean-air",
 ) {
   graph.addEdge({
     ...createIndustrialEdge(type),
@@ -625,21 +637,21 @@ function e(
 }
 
 function loadOdpraseniDetail(graph: any) {
-  graph.clearCells();
+  if (graph.getNodes().length > 0) graph.clearCells();
 
-  // ── Stage label ────────────────────────────────────────────────────────────
-  addLabel(graph, "Odprášení II.stupeň", 280, 42, 300, "#1a1a2e", 15);
-  addLabel(graph, "Odprášení I.stupeň", 280, 330, 280, "#1a1a2e", 15);
+  // ── Labels ─────────────────────────────────────────────────────────────────
+  addLabel(graph, "Odprášení II.stupeň", 200, 30, 340, "#94a3b8", 14);
+  addLabel(graph, "Odprášení I.stupeň", 200, 400, 300, "#94a3b8", 14);
 
-  // ── Stage II: 4 Filtr (x: 130,270,410,550 | y: 80) ────────────────────────
-  const filtrX = [130, 270, 410, 550];
+  // ── Stage II: 4 Filtr (y=80, cách nhau 180px) ─────────────────────────────
+  const filtrX: number[] = [160, 340, 520, 700];
   for (let i = 1; i <= 4; i++) {
     addNode(
       graph,
       `filtr-${i}`,
       "esp-filter-tank",
       `Filtr ${i}`,
-      filtrX[i - 1],
+      filtrX[i - 1]!,
       80,
       {
         label: `Filtr ${i}`,
@@ -650,13 +662,13 @@ function loadOdpraseniDetail(graph: any) {
     );
   }
 
-  // ── Stage II: Water tank (x:730, y:80) ────────────────────────────────────
+  // ── Stage II: Water tank (x=900, y=80) ────────────────────────────────────
   addNode(
     graph,
     "water-tank",
     "static-equipment",
     "Water Tank",
-    730,
+    900,
     80,
     {
       equipmentType: "hopper",
@@ -666,16 +678,15 @@ function loadOdpraseniDetail(graph: any) {
     120,
   );
 
-  // ── Stage II: Van trên mỗi Filtr (nhỏ, y:62) ──────────────────────────────
-  // 4 van trên đường ống ngang Stage II
+  // ── Stage II: Van trên đường ống ngang (y=50, căn giữa mỗi Filtr) ─────────
   for (let i = 1; i <= 4; i++) {
     addNode(
       graph,
       `valve-top-${i}`,
       "control-valve",
       `V${i}`,
-      filtrX[i - 1] + 10,
-      52,
+      filtrX[i - 1]! + 20,
+      50,
       {
         label: `V${i}`,
         mode: "AUTO",
@@ -685,14 +696,13 @@ function loadOdpraseniDetail(graph: any) {
       60,
     );
   }
-  // Van trước water tank
   addNode(
     graph,
     "valve-top-5",
     "control-valve",
     "V5",
-    720,
-    52,
+    890,
+    50,
     {
       label: "V5",
       mode: "AUTO",
@@ -702,14 +712,14 @@ function loadOdpraseniDetail(graph: any) {
     60,
   );
 
-  // ── Stage II: Data tags bên phải (current + rpm) ───────────────────────────
+  // ── Stage II: Data tags + Vent II (x=1000–1200, y=160–340) ──────────────────
   addNode(
     graph,
     "tag-curr-ii",
     "data-tag",
     "CURR-II",
-    660,
-    248,
+    1000,
+    160,
     {
       label: "CURR",
       value: 12.4,
@@ -717,15 +727,15 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
   addNode(
     graph,
     "tag-rpm-ii",
     "data-tag",
     "RPM-II",
-    760,
-    248,
+    1110,
+    160,
     {
       label: "RPM",
       value: 12.0,
@@ -733,11 +743,9 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
-
-  // ── Stage II: Ventilátor lớn bên phải (x:720, y:290) ─────────────────────
-  addNode(graph, "vent-ii", "motor-blower", "Vent II", 720, 280, {
+  addNode(graph, "vent-ii", "motor-blower", "Vent II", 1060, 220, {
     label: "Vent II",
     status: "stopped",
     current: 120,
@@ -745,67 +753,102 @@ function loadOdpraseniDetail(graph: any) {
     bearingTemp: 45,
     size: "large",
   });
-
-  // Mini temp tags dưới vent-ii (4 cái: 123°C 110°C 107°C 101°C)
-  const ventIITemps = [123, 110, 107, 101];
+  const ventIITemps: number[] = [123, 110, 107, 101];
   for (let i = 0; i < 4; i++) {
     addMini(
       graph,
       `mini-vent-ii-${i + 1}`,
-      ventIITemps[i],
+      ventIITemps[i]!,
       "°C",
-      700 + i * 62,
-      432,
+      1020 + i * 68,
+      340,
     );
   }
 
-  // ── Chimney (x:1050, y:80) ─────────────────────────────────────────────────
+  // ── Chimney (x=1380, y=60) ─────────────────────────────────────────────────
   addNode(
     graph,
     "chimney-1",
     "static-equipment-chimney",
     "Chimney",
-    1060,
-    80,
+    1380,
+    60,
     {
       equipmentType: "chimney",
       label: "Chimney",
     },
     60,
-    400,
-  );
-
-  // ── Stage I: Cyclone/Hopper lớn (x:130, y:430) ────────────────────────────
-  addNode(
-    graph,
-    "cyclone-1",
-    "static-equipment",
-    "Cyclone",
-    130,
-    430,
-    {
-      equipmentType: "cyclone",
-      label: "Cyclone",
-    },
-    100,
     160,
   );
 
-  // Data tags bên trái cyclone
+  // Van butterfly trước Chimney (từ water-tank ra)
+  addNode(
+    graph,
+    "valve-chimney",
+    "control-valve",
+    "V-CH",
+    1290,
+    100,
+    {
+      label: "V-CH",
+      mode: "AUTO",
+      openPercent: 100,
+    },
+    60,
+    60,
+  );
+
+  // Pipe junction indicators — hình tròn nhỏ trên đường ống Stage II
+  // (giống hình gốc: các vòng tròn trắng tại điểm rẽ nhánh)
+  const junctionY = 55;
+  const junctionXs = [200, 380, 560, 740, 960];
+  junctionXs.forEach((jx, idx) => {
+    graph.addNode({
+      id: `junction-ii-${idx + 1}`,
+      shape: "circle",
+      x: jx,
+      y: junctionY,
+      width: 14,
+      height: 14,
+      attrs: {
+        body: { fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5 },
+      },
+      data: { isJunction: true },
+    });
+  });
+
+  // Pipe junction indicators — Stage I (điểm rẽ nhánh trên đường ống ngang)
+  const junctionIXs = [310, 550];
+  junctionIXs.forEach((jx, idx) => {
+    graph.addNode({
+      id: `junction-i-${idx + 1}`,
+      shape: "circle",
+      x: jx,
+      y: 490,
+      width: 14,
+      height: 14,
+      attrs: {
+        body: { fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5 },
+      },
+      data: { isJunction: true },
+    });
+  });
+
+  // ── Stage I: Tags đo thông số bên trái Cyclone ────────────────────────────
   addNode(
     graph,
     "tag-valve-left",
     "control-valve",
     "V-L",
-    30,
-    370,
+    20,
+    430,
     {
       label: "V-L",
       mode: "AUTO",
       openPercent: 63,
     },
-    70,
-    70,
+    60,
+    60,
   );
   addNode(
     graph,
@@ -813,7 +856,7 @@ function loadOdpraseniDetail(graph: any) {
     "data-tag",
     "TEMP-L",
     20,
-    450,
+    510,
     {
       label: "TEMP",
       value: 120,
@@ -821,7 +864,7 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
   addNode(
     graph,
@@ -829,7 +872,7 @@ function loadOdpraseniDetail(graph: any) {
     "data-tag",
     "PRES-L",
     20,
-    510,
+    570,
     {
       label: "PRES",
       value: -0.15,
@@ -837,7 +880,7 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
   addNode(
     graph,
@@ -845,7 +888,7 @@ function loadOdpraseniDetail(graph: any) {
     "data-tag",
     "VOL-L",
     20,
-    570,
+    630,
     {
       label: "VOL",
       value: 120,
@@ -853,7 +896,7 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
   addNode(
     graph,
@@ -861,7 +904,7 @@ function loadOdpraseniDetail(graph: any) {
     "data-tag",
     "PRES2-L",
     20,
-    620,
+    690,
     {
       label: "PRES2",
       value: 3.22,
@@ -869,15 +912,31 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
+  );
+
+  // ── Stage I: Cyclone (x=160, y=460) ───────────────────────────────────────
+  addNode(
+    graph,
+    "cyclone-1",
+    "static-equipment",
+    "Cyclone",
+    160,
+    460,
+    {
+      equipmentType: "cyclone",
+      label: "Cyclone",
+    },
+    100,
+    160,
   );
   addNode(
     graph,
     "tag-pres3-bot",
     "data-tag",
     "PRES3-B",
-    130,
-    680,
+    160,
+    650,
     {
       label: "PRES3",
       value: 120,
@@ -885,64 +944,47 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
 
-  // ── Stage I: Van trước Vent 1 và Vent 2 ───────────────────────────────────
+  // ── Stage I: Van + Vent 1 (x=340–560) ────────────────────────────────────
   addNode(
     graph,
     "valve-i-1",
     "control-valve",
     "VI-1",
-    290,
-    390,
+    340,
+    450,
     {
       label: "VI-1",
       mode: "AUTO",
       openPercent: 100,
     },
-    70,
-    70,
+    60,
+    60,
   );
   addNode(
     graph,
     "valve-i-2",
     "control-valve",
     "VI-2",
-    290,
-    470,
+    340,
+    540,
     {
       label: "VI-2",
       mode: "AUTO",
       openPercent: 100,
     },
-    70,
-    70,
+    60,
+    60,
   );
-  addNode(
-    graph,
-    "valve-i-3",
-    "control-valve",
-    "VI-3",
-    530,
-    390,
-    {
-      label: "VI-3",
-      mode: "AUTO",
-      openPercent: 100,
-    },
-    70,
-    70,
-  );
-
-  // Data tags áp suất + nhiệt độ Stage I
   addNode(
     graph,
     "tag-pres-i",
     "data-tag",
     "PRES-I",
-    290,
-    540,
+    340,
+    630,
     {
       label: "PRES",
       value: 120,
@@ -950,15 +992,15 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
   addNode(
     graph,
     "tag-temp-i",
     "data-tag",
     "TEMP-I",
-    290,
-    600,
+    340,
+    690,
     {
       label: "TEMP",
       value: 74,
@@ -966,11 +1008,25 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
-
-  // ── Stage I: Ventilátor 1 (x:390, y:450) ──────────────────────────────────
-  addNode(graph, "vent-1", "motor-blower", "Ventilátor 1", 390, 450, {
+  addNode(
+    graph,
+    "tag-curr-v1",
+    "data-tag",
+    "CURR-V1",
+    460,
+    420,
+    {
+      label: "CURR",
+      value: 120.0,
+      unit: "A",
+      status: "normal",
+    },
+    90,
+    44,
+  );
+  addNode(graph, "vent-1", "motor-blower", "Ventilátor 1", 460, 480, {
     label: "Ventilátor 1",
     status: "stopped",
     current: 120,
@@ -978,25 +1034,40 @@ function loadOdpraseniDetail(graph: any) {
     bearingTemp: 45,
     size: "large",
   });
-  // Mini temp tags dưới vent-1 (4 cái: 54°C 53°C 55°C 55°C)
-  const vent1Temps = [54, 53, 55, 55];
+  const vent1Temps: number[] = [54, 53, 55, 55];
   for (let i = 0; i < 4; i++) {
     addMini(
       graph,
       `mini-vent1-${i + 1}`,
-      vent1Temps[i],
+      vent1Temps[i]!,
       "°C",
-      370 + i * 62,
+      440 + i * 68,
       600,
     );
   }
-  // Current tag trên vent-1
+
+  // ── Stage I: Van + Vent 2 (x=700–900) ────────────────────────────────────
   addNode(
     graph,
-    "tag-curr-v1",
+    "valve-i-3",
+    "control-valve",
+    "VI-3",
+    700,
+    450,
+    {
+      label: "VI-3",
+      mode: "AUTO",
+      openPercent: 100,
+    },
+    60,
+    60,
+  );
+  addNode(
+    graph,
+    "tag-curr-v2",
     "data-tag",
-    "CURR-V1",
-    390,
+    "CURR-V2",
+    780,
     420,
     {
       label: "CURR",
@@ -1005,11 +1076,9 @@ function loadOdpraseniDetail(graph: any) {
       status: "normal",
     },
     90,
-    50,
+    44,
   );
-
-  // ── Stage I: Ventilátor 2 (x:640, y:450) ──────────────────────────────────
-  addNode(graph, "vent-2", "motor-blower", "Ventilátor 2", 640, 450, {
+  addNode(graph, "vent-2", "motor-blower", "Ventilátor 2", 780, 480, {
     label: "Ventilátor 2",
     status: "stopped",
     current: 120,
@@ -1017,45 +1086,27 @@ function loadOdpraseniDetail(graph: any) {
     bearingTemp: 45,
     size: "large",
   });
-  // Mini temp tags dưới vent-2 (4 cái: 59°C 56°C 55°C 53°C)
-  const vent2Temps = [59, 56, 55, 53];
+  const vent2Temps: number[] = [59, 56, 55, 53];
   for (let i = 0; i < 4; i++) {
     addMini(
       graph,
       `mini-vent2-${i + 1}`,
-      vent2Temps[i],
+      vent2Temps[i]!,
       "°C",
-      620 + i * 62,
+      760 + i * 68,
       600,
     );
   }
-  // Current tag trên vent-2
-  addNode(
-    graph,
-    "tag-curr-v2",
-    "data-tag",
-    "CURR-V2",
-    640,
-    420,
-    {
-      label: "CURR",
-      value: 120.0,
-      unit: "A",
-      status: "normal",
-    },
-    90,
-    50,
-  );
 
-  // ── Stage I: 3 van dưới cùng (đường ống ngang đáy) ────────────────────────
+  // ── Bottom: Đường ống đáy + van + current tags ─────────────────────────────
   for (let i = 1; i <= 3; i++) {
     addNode(
       graph,
       `valve-bot-${i}`,
       "control-valve",
       `VB${i}`,
-      230 + (i - 1) * 250,
-      660,
+      280 + (i - 1) * 320,
+      760,
       {
         label: `VB${i}`,
         mode: "AUTO",
@@ -1064,16 +1115,13 @@ function loadOdpraseniDetail(graph: any) {
       60,
       60,
     );
-  }
-  // Current tags dưới đường ống đáy
-  for (let i = 1; i <= 3; i++) {
     addNode(
       graph,
       `tag-curr-bot-${i}`,
       "data-tag",
       `CURR-B${i}`,
-      200 + (i - 1) * 250,
-      700,
+      260 + (i - 1) * 320,
+      840,
       {
         label: "CURR",
         value: 60.5,
@@ -1086,47 +1134,155 @@ function loadOdpraseniDetail(graph: any) {
   }
 
   // ── Edges Stage II ─────────────────────────────────────────────────────────
-  // Đường ống ngang trên (qua các van top)
-  e(graph, "valve-top-1", "port_right", "valve-top-2", "port_left");
-  e(graph, "valve-top-2", "port_right", "valve-top-3", "port_left");
-  e(graph, "valve-top-3", "port_right", "valve-top-4", "port_left");
-  e(graph, "valve-top-4", "port_right", "valve-top-5", "port_left");
-  e(graph, "valve-top-5", "port_right", "water-tank", "port_top");
+  // Đường ống ngang trên Stage II — clean-air-main (xanh đậm, dày 6px)
+  e(
+    graph,
+    "valve-top-1",
+    "port_right",
+    "valve-top-2",
+    "port_left",
+    "clean-air-main",
+  );
+  e(
+    graph,
+    "valve-top-2",
+    "port_right",
+    "valve-top-3",
+    "port_left",
+    "clean-air-main",
+  );
+  e(
+    graph,
+    "valve-top-3",
+    "port_right",
+    "valve-top-4",
+    "port_left",
+    "clean-air-main",
+  );
+  e(
+    graph,
+    "valve-top-4",
+    "port_right",
+    "valve-top-5",
+    "port_left",
+    "clean-air-main",
+  );
+  e(
+    graph,
+    "valve-top-5",
+    "port_right",
+    "water-tank",
+    "port_top",
+    "clean-air-main",
+  );
 
-  // Van top → Filtr (xuống)
+  // Van top → Filtr (xuống) — clean-air
   for (let i = 1; i <= 4; i++) {
-    e(graph, `valve-top-${i}`, "port_bottom", `filtr-${i}`, "port_top");
+    e(
+      graph,
+      `valve-top-${i}`,
+      "port_bottom",
+      `filtr-${i}`,
+      "port_top",
+      "clean-air",
+    );
   }
 
-  // Filtr chain ngang
-  e(graph, "filtr-1", "port_right", "filtr-2", "port_left");
-  e(graph, "filtr-2", "port_right", "filtr-3", "port_left");
-  e(graph, "filtr-3", "port_right", "filtr-4", "port_left");
-  e(graph, "filtr-4", "port_right", "tag-curr-ii", "port_left");
-  e(graph, "tag-curr-ii", "port_right", "vent-ii", "port_left");
-  e(graph, "vent-ii", "port_right", "chimney-1", "port_left");
+  // Filtr chain ngang — clean-air-main
+  e(graph, "filtr-1", "port_right", "filtr-2", "port_left", "clean-air-main");
+  e(graph, "filtr-2", "port_right", "filtr-3", "port_left", "clean-air-main");
+  e(graph, "filtr-3", "port_right", "filtr-4", "port_left", "clean-air-main");
+  e(
+    graph,
+    "filtr-4",
+    "port_right",
+    "tag-curr-ii",
+    "port_left",
+    "clean-air-main",
+  );
+  e(
+    graph,
+    "tag-curr-ii",
+    "port_right",
+    "vent-ii",
+    "port_left",
+    "clean-air-main",
+  );
+  e(graph, "vent-ii", "port_right", "chimney-1", "port_left", "clean-air-main");
+
+  // Water tank → van butterfly → chimney (đường xả/bypass)
+  e(graph, "water-tank", "port_right", "valve-chimney", "port_left", "drain");
+  e(graph, "valve-chimney", "port_right", "chimney-1", "port_right", "drain");
+
+  // Signal: vent-ii → tag-rpm-ii + mini temp tags
+  e(graph, "vent-ii", "port_bottom", "tag-rpm-ii", "port_top", "signal");
+  for (let i = 1; i <= 4; i++) {
+    e(
+      graph,
+      "vent-ii",
+      "port_bottom",
+      `mini-vent-ii-${i}`,
+      "port_top",
+      "signal",
+    );
+  }
 
   // ── Edges Stage I ──────────────────────────────────────────────────────────
-  // Cyclone → valve-i-1 → vent-1
-  e(graph, "cyclone-1", "port_right", "valve-i-1", "port_left");
-  e(graph, "valve-i-1", "port_right", "vent-1", "port_left");
+  // Cyclone → valve-i-1 → vent-1 — gas (xám đậm)
+  e(graph, "cyclone-1", "port_right", "valve-i-1", "port_left", "gas");
+  e(graph, "valve-i-1", "port_right", "vent-1", "port_left", "gas");
 
-  // Cyclone → valve-i-2 → valve-i-3 → vent-2
-  e(graph, "cyclone-1", "port_right", "valve-i-2", "port_left");
-  e(graph, "valve-i-2", "port_right", "valve-i-3", "port_left");
-  e(graph, "valve-i-3", "port_right", "vent-2", "port_left");
+  // Cyclone → valve-i-2 → valve-i-3 → vent-2 — gas
+  e(graph, "cyclone-1", "port_right", "valve-i-2", "port_left", "gas");
+  e(graph, "valve-i-2", "port_right", "valve-i-3", "port_left", "gas");
+  e(graph, "valve-i-3", "port_right", "vent-2", "port_left", "gas");
 
-  // Vent 1 + Vent 2 → Stage II (lên trên)
-  e(graph, "vent-1", "port_top", "filtr-1", "port_bottom");
-  e(graph, "vent-2", "port_top", "filtr-3", "port_bottom");
+  // Vent 1 + Vent 2 → Stage II — clean-air
+  e(graph, "vent-1", "port_top", "filtr-1", "port_bottom", "clean-air");
+  e(graph, "vent-2", "port_top", "filtr-3", "port_bottom", "clean-air");
 
-  // Vent 2 → Chimney
-  e(graph, "vent-2", "port_right", "chimney-1", "port_bottom");
+  // Vent 2 → Chimney — clean-air
+  e(graph, "vent-2", "port_right", "chimney-1", "port_bottom", "clean-air");
 
-  // Đường ống đáy (Stage I bottom)
-  e(graph, "cyclone-1", "port_bottom", "valve-bot-1", "port_left");
-  e(graph, "valve-bot-1", "port_right", "valve-bot-2", "port_left");
-  e(graph, "valve-bot-2", "port_right", "valve-bot-3", "port_left");
+  // Signal: vent-1 → tag-curr-v1 + mini temp tags
+  e(graph, "vent-1", "port_top", "tag-curr-v1", "port_bottom", "signal");
+  for (let i = 1; i <= 4; i++) {
+    e(graph, "vent-1", "port_bottom", `mini-vent1-${i}`, "port_top", "signal");
+  }
+
+  // Signal: vent-2 → tag-curr-v2 + mini temp tags
+  e(graph, "vent-2", "port_top", "tag-curr-v2", "port_bottom", "signal");
+  for (let i = 1; i <= 4; i++) {
+    e(graph, "vent-2", "port_bottom", `mini-vent2-${i}`, "port_top", "signal");
+  }
+
+  // Signal: cyclone → các tag đo thông số đầu vào
+  e(graph, "cyclone-1", "port_left", "tag-temp-left", "port_right", "signal");
+  e(graph, "cyclone-1", "port_left", "tag-pres-left", "port_right", "signal");
+  e(graph, "cyclone-1", "port_left", "tag-vol-left", "port_right", "signal");
+  e(graph, "cyclone-1", "port_left", "tag-pres2-left", "port_right", "signal");
+  e(graph, "cyclone-1", "port_bottom", "tag-pres3-bot", "port_top", "signal");
+
+  // Signal: valve-i-2 → tag áp suất + nhiệt độ Stage I
+  e(graph, "valve-i-2", "port_bottom", "tag-pres-i", "port_top", "signal");
+  e(graph, "valve-i-2", "port_bottom", "tag-temp-i", "port_top", "signal");
+
+  // Đường ống đáy — drain (xanh cyan, mảnh)
+  e(graph, "cyclone-1", "port_bottom", "valve-bot-1", "port_left", "drain");
+  e(graph, "valve-bot-1", "port_right", "valve-bot-2", "port_left", "drain");
+  e(graph, "valve-bot-2", "port_right", "valve-bot-3", "port_left", "drain");
+
+  // Signal: valve-bot → tag-curr-bot
+  for (let i = 1; i <= 3; i++) {
+    e(
+      graph,
+      `valve-bot-${i}`,
+      "port_bottom",
+      `tag-curr-bot-${i}`,
+      "port_top",
+      "signal",
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

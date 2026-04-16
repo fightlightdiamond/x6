@@ -95,15 +95,12 @@ export const useX6Graph = () => {
   const setupRemovalTools = () => {
     if (!graphInstance) return;
 
-    graphInstance!.on("edge:mouseenter", ({ edge }) => {
-      edge.addTools([{ name: "button-remove", args: { distance: "50%" } }]);
-    });
-
-    graphInstance!.on("edge:mouseleave", ({ edge }) => {
-      edge.removeTools();
-    });
-
     graphInstance!.on("node:mouseenter", ({ node }) => {
+      // Hiện ports khi hover
+      node.getPorts().forEach((port) => {
+        node.setPortProp(port.id!, "attrs/circle/visibility", "visible");
+      });
+
       if (node.shape !== "rect") {
         node.addTools([
           {
@@ -115,7 +112,19 @@ export const useX6Graph = () => {
     });
 
     graphInstance!.on("node:mouseleave", ({ node }) => {
+      // Ẩn ports khi rời
+      node.getPorts().forEach((port) => {
+        node.setPortProp(port.id!, "attrs/circle/visibility", "hidden");
+      });
       node.removeTools();
+    });
+
+    graphInstance!.on("edge:mouseenter", ({ edge }) => {
+      edge.addTools([{ name: "button-remove", args: { distance: "50%" } }]);
+    });
+
+    graphInstance!.on("edge:mouseleave", ({ edge }) => {
+      edge.removeTools();
     });
   };
 
