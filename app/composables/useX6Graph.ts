@@ -1,8 +1,8 @@
-import { shallowRef } from 'vue';
-import { Graph } from '@antv/x6';
-import { Dnd } from '@antv/x6-plugin-dnd';
-import { validateITConnection } from '../utils/x6/connectionRules';
-import { registerAllVueNodes } from '../utils/x6/registerNodes';
+import { shallowRef } from "vue";
+import { Graph } from "@antv/x6";
+import { Dnd } from "@antv/x6-plugin-dnd";
+import { validateConnection } from "../utils/x6/connectionRules";
+import { registerAllVueNodes } from "../utils/x6/registerNodes";
 
 // Để đảm bảo proxy của Vue không làm hỏng X6 Graph Class, ta dùng biến cục bộ hoặc shallowRef
 let graphInstance: Graph | null = null;
@@ -26,36 +26,36 @@ export const useX6Graph = () => {
       container: containerEl,
       autoResize: true,
       grid: {
-        size: 10,
+        size: 20,
         visible: true,
-        type: 'dot',
-        args: { color: '#a0aabb', thickness: 1 },
+        type: "dot",
+        args: { color: "#2d3748", thickness: 1 },
       },
-      background: { color: '#fafafa' },
+      background: { color: "#1a2035" },
       panning: {
         enabled: true,
-        eventTypes: ['leftMouseDown', 'mouseWheel'],
+        eventTypes: ["leftMouseDown", "mouseWheel"],
       },
       mousewheel: {
         enabled: true,
-        modifiers: 'ctrl',
+        modifiers: "ctrl",
         maxScale: 4,
         minScale: 0.2,
       },
       connecting: {
-        snap: true,          
-        allowBlank: false,   
-        allowLoop: false,    
-        highlight: true,     
-        validateConnection: validateITConnection,
+        snap: true,
+        allowBlank: false,
+        allowLoop: false,
+        highlight: true,
+        validateConnection: validateConnection,
         createEdge() {
           return graphInstance!.createEdge({
-            shape: 'edge',
+            shape: "edge",
             attrs: {
               line: {
-                stroke: '#1890ff',
+                stroke: "#1890ff",
                 strokeWidth: 2,
-                targetMarker: { name: 'block', width: 12, height: 8 },
+                targetMarker: { name: "block", width: 12, height: 8 },
               },
             },
             zIndex: 0,
@@ -68,21 +68,21 @@ export const useX6Graph = () => {
     graphInstance.addNode({
       x: 100,
       y: 100,
-      shape: 'rect',
+      shape: "rect",
       width: 160,
       height: 60,
-      label: 'Kéo hình vào đây ➔',
+      label: "Kéo hình vào đây ➔",
       attrs: {
-        body: { stroke: '#8b5cf6', fill: '#ede9fe', rx: 6, ry: 6 },
-        label: { fill: '#4c1d95', fontWeight: 'bold' }
-      }
+        body: { stroke: "#8b5cf6", fill: "#ede9fe", rx: 6, ry: 6 },
+        label: { fill: "#4c1d95", fontWeight: "bold" },
+      },
     });
 
     // Khởi tạo plugin Dnd
     dndInstance = new Dnd({
       target: graphInstance!,
       scaled: false,
-      getDropNode: (node) => node.clone()
+      getDropNode: (node) => node.clone(),
     });
 
     // Thêm plugin công cụ xóa Node/Edge
@@ -95,24 +95,26 @@ export const useX6Graph = () => {
   const setupRemovalTools = () => {
     if (!graphInstance) return;
 
-    graphInstance!.on('edge:mouseenter', ({ edge }) => {
-      edge.addTools([{ name: 'button-remove', args: { distance: '50%' } }]);
+    graphInstance!.on("edge:mouseenter", ({ edge }) => {
+      edge.addTools([{ name: "button-remove", args: { distance: "50%" } }]);
     });
-    
-    graphInstance!.on('edge:mouseleave', ({ edge }) => {
+
+    graphInstance!.on("edge:mouseleave", ({ edge }) => {
       edge.removeTools();
     });
 
-    graphInstance!.on('node:mouseenter', ({ node }) => {
-      if (node.shape !== 'rect') {
-        node.addTools([{
-          name: 'button-remove',
-          args: { x: '100%', y: 0, offset: { x: -10, y: 10 } },
-        }]);
+    graphInstance!.on("node:mouseenter", ({ node }) => {
+      if (node.shape !== "rect") {
+        node.addTools([
+          {
+            name: "button-remove",
+            args: { x: "100%", y: 0, offset: { x: -10, y: 10 } },
+          },
+        ]);
       }
     });
-    
-    graphInstance!.on('node:mouseleave', ({ node }) => {
+
+    graphInstance!.on("node:mouseleave", ({ node }) => {
       node.removeTools();
     });
   };
@@ -124,6 +126,6 @@ export const useX6Graph = () => {
     initGraph,
     getGraph,
     getDnd,
-    isGraphReady
+    isGraphReady,
   };
 };
