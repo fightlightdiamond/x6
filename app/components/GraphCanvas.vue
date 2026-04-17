@@ -28,12 +28,13 @@
         Xóa</button>
 
       <!-- Divider -->
-      <div class="w-px h-8 bg-gray-300 mx-1"></div>
+      <div class="w-px h-8 bg-gray-400 mx-1"></div>
 
-      <!-- Monitor Button -->
-      <button @click="toggleMonitoring" class="px-5 py-2 rounded-lg font-bold shadow-lg transition-all text-sm"
+      <!-- Monitor toggle -->
+      <button @click="isMonitoring ? stopMonitoring() : startMonitoring()"
+        class="px-4 py-2 rounded-lg font-bold shadow-lg transition-all text-sm"
         :class="isMonitoring ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-green-500 text-white hover:bg-green-600'">
-        {{ isMonitoring ? '⏹ Dừng Giám Sát' : '▶ Bắt Đầu Giám Sát' }}
+        {{ isMonitoring ? '⏹ Dừng Monitor' : '▶ Bắt Đầu Monitor' }}
       </button>
     </div>
   </div>
@@ -43,20 +44,15 @@
 import { ref, onMounted } from 'vue';
 import { getTeleport } from '@antv/x6-vue-shape';
 import { useX6Graph } from '../composables/useX6Graph';
-import { useScadaSimulation } from '../composables/useScadaSimulation';
 import { useGraphPersistence } from '../composables/useGraphPersistence';
+import { useSocketMonitor } from '../composables/useSocketMonitor';
 
 const TeleportContainer = getTeleport();
 const graphContainerRef = ref<HTMLElement | null>(null);
 
 const { initGraph, getGraph } = useX6Graph();
-const { isMonitoring, startMonitoring, stopMonitoring } = useScadaSimulation(getGraph);
 const { hasSavedData, saveGraph, loadGraph, clearGraph, exportJSON, importJSON } = useGraphPersistence(getGraph);
-
-const toggleMonitoring = () => {
-  if (isMonitoring.value) stopMonitoring();
-  else startMonitoring();
-};
+const { isMonitoring, startMonitoring, stopMonitoring } = useSocketMonitor(getGraph);
 
 const handleImport = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];

@@ -4,7 +4,9 @@ export default defineNuxtConfig({
 
   modules: ["@nuxtjs/tailwindcss", "@pinia/nuxt"],
 
-  ssr: false, // Tắt SSR cho các dự án dùng đồ họa Canvas
+  plugins: ["~/plugins/socket.client.ts"],
+
+  ssr: false,
 
   devServer: {
     host: "127.0.0.1",

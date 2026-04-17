@@ -135,13 +135,13 @@ const loadTemplate = async (templateId: string) => {
 
   pendingTemplate.value = null;
 
-  // Clear canvas và đợi Vue unmount xong hoàn toàn
   graph.clearCells();
-
-  // 100ms đủ để Vue destroy tất cả component instances trong TeleportContainer
   await new Promise(resolve => setTimeout(resolve, 100));
-
-  // Load template — bên trong cũng gọi clearCells() nhưng canvas đã trống
   tpl.load(graph);
+
+  // Notify backend to switch simulation state to this template
+  const { $socket } = useNuxtApp();
+  ($socket as any).emit('monitor:set-template', { templateId });
+  console.log('[AppSidebar] Emitted monitor:set-template:', templateId);
 };
 </script>

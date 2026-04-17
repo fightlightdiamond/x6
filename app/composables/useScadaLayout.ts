@@ -95,7 +95,7 @@ export function useScadaLayout() {
     });
 
     graph.addNode({
-      id: "valve-1",
+      id: "van-1",
       ...createNodeConfig("control-valve", "Van 1"),
       x: 200,
       y: 390,
@@ -103,7 +103,7 @@ export function useScadaLayout() {
     });
 
     graph.addNode({
-      id: "valve-2",
+      id: "van-2",
       ...createNodeConfig("control-valve", "Van 2"),
       x: 420,
       y: 390,
@@ -111,7 +111,7 @@ export function useScadaLayout() {
     });
 
     graph.addNode({
-      id: "tag-temp",
+      id: "temp-01",
       ...createNodeConfig("data-tag", "TEMP-01"),
       x: 680,
       y: 370,
@@ -119,7 +119,7 @@ export function useScadaLayout() {
     });
 
     graph.addNode({
-      id: "tag-pres",
+      id: "pres-01",
       ...createNodeConfig("data-tag", "PRES-01"),
       x: 680,
       y: 450,
@@ -169,24 +169,24 @@ export function useScadaLayout() {
     graph.addEdge({
       ...createIndustrialEdge("clean-air"),
       source: { cell: "cyclone-1", port: "port_right" },
-      target: { cell: "valve-1", port: "port_left" },
+      target: { cell: "van-1", port: "port_left" },
     });
 
     graph.addEdge({
       ...createIndustrialEdge("clean-air"),
-      source: { cell: "valve-1", port: "port_right" },
+      source: { cell: "van-1", port: "port_right" },
       target: { cell: "vent-1", port: "port_left" },
     });
 
     graph.addEdge({
       ...createIndustrialEdge("clean-air"),
       source: { cell: "vent-1", port: "port_right" },
-      target: { cell: "valve-2", port: "port_left" },
+      target: { cell: "van-2", port: "port_left" },
     });
 
     graph.addEdge({
       ...createIndustrialEdge("clean-air"),
-      source: { cell: "valve-2", port: "port_right" },
+      source: { cell: "van-2", port: "port_right" },
       target: { cell: "vent-2", port: "port_left" },
     });
 
