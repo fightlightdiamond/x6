@@ -6,6 +6,9 @@
     <!-- Render Vue Components on top of SVG elements -->
     <TeleportContainer />
 
+    <!-- Node Configuration Panel -->
+    <NodeConfigPanel :get-graph="getGraph" />
+
     <!-- Toolbar Actions -->
     <div class="absolute top-4 right-4 z-50 flex items-center gap-2">
       <!-- Persistence Buttons -->
@@ -41,11 +44,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { getTeleport } from '@antv/x6-vue-shape';
 import { useX6Graph } from '../composables/useX6Graph';
 import { useGraphPersistence } from '../composables/useGraphPersistence';
 import { useSocketMonitor } from '../composables/useSocketMonitor';
+import { useNodeConfigStore } from '~/stores/nodeConfigStore';
+import NodeConfigPanel from '~/components/NodeConfigPanel.vue';
 
 const TeleportContainer = getTeleport();
 const graphContainerRef = ref<HTMLElement | null>(null);
@@ -53,15 +58,37 @@ const graphContainerRef = ref<HTMLElement | null>(null);
 const { initGraph, getGraph } = useX6Graph();
 const { hasSavedData, saveGraph, loadGraph, clearGraph, exportJSON, importJSON } = useGraphPersistence(getGraph);
 const { isMonitoring, startMonitoring, stopMonitoring } = useSocketMonitor(getGraph);
+const nodeConfigStore = useNodeConfigStore();
 
 const handleImport = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (file) importJSON(file);
 };
 
+function onNodeClick({ node }: { node: any }) {
+  nodeConfigStore.openPanel(node.id);
+}
+
+function onBlankClick() {
+  nodeConfigStore.closePanel();
+}
+
 onMounted(() => {
   if (graphContainerRef.value) {
     initGraph(graphContainerRef.value);
+    const graph = getGraph();
+    if (graph) {
+      graph.on('node:click', onNodeClick);
+      graph.on('blank:click', onBlankClick);
+    }
+  }
+});
+
+onUnmounted(() => {
+  const graph = getGraph();
+  if (graph) {
+    graph.off('node:click', onNodeClick);
+    graph.off('blank:click', onBlankClick);
   }
 });
 </script>

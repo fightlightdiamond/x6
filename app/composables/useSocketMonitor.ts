@@ -1,24 +1,18 @@
-import { ref, onUnmounted } from "vue";
+import { onUnmounted } from "vue";
+import { storeToRefs } from "pinia";
 import type { Graph } from "@antv/x6";
-import type { ScadaFrame, DeviceUpdate } from "~/types/socket-monitor";
-import type { DeviceStatus } from "~/types/scada";
-
-export type { DeviceStatus };
+import type { ScadaFrame } from "~/types/socket-monitor";
+import { useMonitorStore } from "~/stores/monitorStore";
 
 export function useSocketMonitor(getGraph: () => Graph | null) {
+  const store = useMonitorStore();
+  const { isMonitoring, deviceStatuses } = storeToRefs(store);
   const { $socket } = useNuxtApp();
   const socket = $socket as ReturnType<
     (typeof import("socket.io-client"))["io"]
   >;
 
-  const isMonitoring = ref(false);
-  const deviceStatuses = ref<DeviceStatus[]>([]);
-
   const onFrame = (frame: ScadaFrame) => {
-    console.log(
-      "[useSocketMonitor] scada:frame, devices:",
-      frame.devices.length,
-    );
     const graph = getGraph();
     if (graph) {
       for (const update of frame.devices) {
@@ -30,29 +24,27 @@ export function useSocketMonitor(getGraph: () => Graph | null) {
         }
       }
     }
-    deviceStatuses.value = frame.devices.map((u: DeviceUpdate) => ({
-      id: u.id,
-      label: (u.data as any).label ?? u.id,
-      status: (u.data as any).status ?? "normal",
-    }));
+    store.updateDeviceStatuses(frame.devices as any);
   };
 
-  const onStopped = () => {
-    isMonitoring.value = false;
-  };
+  const onStopped = () => store.setMonitoring(false);
 
   socket.on("scada:frame", onFrame);
   socket.on("scada:stopped", onStopped);
 
   function startMonitoring(): void {
-    console.log("[useSocketMonitor] startMonitoring()");
-    isMonitoring.value = true;
+    store.setMonitoring(true);
+    // Notify backend of current template if one is active
+    if (store.activeTemplateId) {
+      socket.emit("monitor:set-template", {
+        templateId: store.activeTemplateId,
+      });
+    }
     socket.emit("monitor:start");
   }
 
   function stopMonitoring(): void {
     socket.emit("monitor:stop");
-    isMonitoring.value = false;
   }
 
   onUnmounted(() => {

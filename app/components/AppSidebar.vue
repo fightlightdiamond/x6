@@ -112,6 +112,7 @@ import { ref, nextTick } from 'vue';
 import { useX6Graph } from '../composables/useX6Graph';
 import { createNodeConfig } from '../utils/x6/nodeTemplates';
 import { ESP_TEMPLATES } from '../utils/x6/espTemplates';
+import { useMonitorStore } from '../stores/monitorStore';
 
 const { getGraph, getDnd } = useX6Graph();
 
@@ -139,9 +140,12 @@ const loadTemplate = async (templateId: string) => {
   await new Promise(resolve => setTimeout(resolve, 100));
   tpl.load(graph);
 
-  // Notify backend to switch simulation state to this template
+  // Update store and notify backend
+  const store = useMonitorStore();
+  store.setTemplate(templateId);
+
   const { $socket } = useNuxtApp();
   ($socket as any).emit('monitor:set-template', { templateId });
-  console.log('[AppSidebar] Emitted monitor:set-template:', templateId);
+  console.log('[AppSidebar] Template loaded:', templateId);
 };
 </script>
