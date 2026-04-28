@@ -1,16 +1,18 @@
-import { onUnmounted } from "vue";
-import { storeToRefs } from "pinia";
+import { ref, onUnmounted } from "vue";
 import type { Graph } from "@antv/x6";
 import type { ScadaFrame } from "~/types/socket-monitor";
-import { useMonitorStore } from "~/stores/monitorStore";
+import { io } from "socket.io-client";
+
+const SOCKET_URL = "http://localhost:3001";
+const CONNECTION_TIMEOUT_MS = 5000;
 
 export function useSocketMonitor(getGraph: () => Graph | null) {
-  const store = useMonitorStore();
-  const { isMonitoring, deviceStatuses } = storeToRefs(store);
-  const { $socket } = useNuxtApp();
-  const socket = $socket as ReturnType<
-    (typeof import("socket.io-client"))["io"]
-  >;
+  const isMonitoring = ref(false);
+  const deviceStatuses = ref<
+    Array<{ id: string; label: string; status: string }>
+  >([]);
+
+  const socket = io(SOCKET_URL, { autoConnect: false });
 
   const onFrame = (frame: ScadaFrame) => {
     const graph = getGraph();
@@ -18,38 +20,45 @@ export function useSocketMonitor(getGraph: () => Graph | null) {
       for (const update of frame.devices) {
         const node = graph.getCellById(update.id);
         if (node) {
-          node.setData(update.data, { overwrite: true });
+          node.setData(update.data);
         } else {
           console.warn("[useSocketMonitor] Node not found:", update.id);
         }
       }
     }
-    store.updateDeviceStatuses(frame.devices as any);
+    deviceStatuses.value = frame.devices.map((u) => ({
+      id: u.id,
+      label: (u.data as any)?.label ?? u.id,
+      status: (u.data as any)?.status ?? "normal",
+    }));
   };
 
-  const onStopped = () => store.setMonitoring(false);
-
   socket.on("scada:frame", onFrame);
-  socket.on("scada:stopped", onStopped);
 
   function startMonitoring(): void {
-    store.setMonitoring(true);
-    // Notify backend of current template if one is active
-    if (store.activeTemplateId) {
-      socket.emit("monitor:set-template", {
-        templateId: store.activeTemplateId,
-      });
-    }
+    isMonitoring.value = true;
+    socket.connect();
     socket.emit("monitor:start");
+
+    // Connection timeout: if socket not connected within 5s, abort
+    const timeoutId = setTimeout(() => {
+      if (!socket.connected) {
+        isMonitoring.value = false;
+      }
+    }, CONNECTION_TIMEOUT_MS);
+
+    socket.once("connect", () => clearTimeout(timeoutId));
   }
 
   function stopMonitoring(): void {
     socket.emit("monitor:stop");
+    socket.once("scada:stopped", () => {
+      isMonitoring.value = false;
+    });
   }
 
   onUnmounted(() => {
-    socket.off("scada:frame", onFrame);
-    socket.off("scada:stopped", onStopped);
+    socket.disconnect();
   });
 
   return { isMonitoring, deviceStatuses, startMonitoring, stopMonitoring };
