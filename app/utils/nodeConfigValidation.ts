@@ -34,6 +34,11 @@ export interface NodeFormData {
 
   // Conditional: nodes supporting threshold
   thresholds?: ThresholdEntry[];
+
+  // Rotate & Resize
+  angle?: number; // Rotation_Angle: 0–359 degrees
+  width?: number; // Node width in pixels: MIN_WIDTH–MAX_WIDTH
+  height?: number; // Node height in pixels: MIN_HEIGHT–MAX_HEIGHT
 }
 
 const DEFAULT_THRESHOLDS: ThresholdEntry[] = [
@@ -127,4 +132,32 @@ export function buildFormData(
 
 export function applyFormDataToNode(node: any, formData: NodeFormData): void {
   node.setData(formData);
+}
+
+// --- Rotate & Resize constants and validation (node-rotate-resize feature) ---
+
+export const MIN_WIDTH = 20;
+export const MAX_WIDTH = 800;
+export const MIN_HEIGHT = 20;
+export const MAX_HEIGHT = 800;
+
+export function validateRotationAngle(angle: number): string | null {
+  if (!Number.isFinite(angle) || angle < 0 || angle > 359) {
+    return "Góc xoay phải trong khoảng 0–359 độ";
+  }
+  return null;
+}
+
+export function validateNodeWidth(width: number): string | null {
+  if (!Number.isFinite(width) || width < MIN_WIDTH || width > MAX_WIDTH) {
+    return `Chiều rộng phải trong khoảng ${MIN_WIDTH}–${MAX_WIDTH} px`;
+  }
+  return null;
+}
+
+export function validateNodeHeight(height: number): string | null {
+  if (!Number.isFinite(height) || height < MIN_HEIGHT || height > MAX_HEIGHT) {
+    return `Chiều cao phải trong khoảng ${MIN_HEIGHT}–${MAX_HEIGHT} px`;
+  }
+  return null;
 }

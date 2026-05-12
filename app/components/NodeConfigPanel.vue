@@ -243,6 +243,47 @@
         </template>
       </div>
 
+      <!-- Section: Kích Thước & Xoay -->
+      <div class="border-t border-gray-700 pt-4 mt-4">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+          Kích Thước & Xoay
+        </p>
+        <!-- Rotation Angle -->
+        <div class="mb-3">
+          <label class="block text-xs text-gray-400 mb-1">Góc xoay (°)</label>
+          <input
+            v-model.number="formData.angle"
+            type="number" min="0" max="359"
+            class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm w-full"
+            :class="{ 'border-red-500': errors.angle }"
+            placeholder="0–359"
+          />
+          <p v-if="errors.angle" class="text-red-400 text-xs mt-1">{{ errors.angle }}</p>
+        </div>
+        <!-- Width -->
+        <div class="mb-3">
+          <label class="block text-xs text-gray-400 mb-1">Chiều rộng (px)</label>
+          <input
+            v-model.number="formData.width"
+            type="number" :min="MIN_WIDTH" :max="MAX_WIDTH"
+            class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm w-full"
+            :class="{ 'border-red-500': errors.width }"
+          />
+          <p v-if="errors.width" class="text-red-400 text-xs mt-1">{{ errors.width }}</p>
+        </div>
+        <!-- Height -->
+        <div class="mb-3">
+          <label class="block text-xs text-gray-400 mb-1">Chiều cao (px)</label>
+          <input
+            v-model.number="formData.height"
+            type="number" :min="MIN_HEIGHT" :max="MAX_HEIGHT"
+            class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white text-sm w-full"
+            :class="{ 'border-red-500': errors.height }"
+          />
+          <p v-if="errors.height" class="text-red-400 text-xs mt-1">{{ errors.height }}</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- Actions -->
@@ -286,6 +327,13 @@ import {
   validateOpenPercent,
   canAddThreshold,
   canRemoveThreshold,
+  validateRotationAngle,
+  validateNodeWidth,
+  validateNodeHeight,
+  MIN_WIDTH,
+  MAX_WIDTH,
+  MIN_HEIGHT,
+  MAX_HEIGHT,
   type NodeFormData,
   type ThresholdEntry,
 } from '~/utils/nodeConfigValidation';
@@ -316,8 +364,6 @@ const NODE_TYPE_LABELS: Record<string, string> = {
   'data-tag': 'Thẻ Dữ Liệu',
   'indicator-light': 'Đèn Chỉ Thị',
   'static-equipment': 'Thiết Bị Tĩnh',
-  'computer-device-node': 'Máy Tính',
-  'my-vue-shape': 'Node Tùy Chỉnh',
 };
 
 const nodeTypeLabel = computed(() => NODE_TYPE_LABELS[currentShape.value] ?? currentShape.value);
@@ -351,6 +397,13 @@ function populateForm(nodeId: string) {
   currentShape.value = shape;
 
   const built = buildFormData(shape, data);
+
+  // Read angle and size from the node
+  const angle = (node as any).getAngle() as number;
+  const size = (node as any).getSize() as { width: number; height: number };
+  built.angle = Math.round(angle) % 360;
+  built.width = Math.round(size.width);
+  built.height = Math.round(size.height);
 
   // Reset formData fields
   Object.keys(formData).forEach((k) => delete (formData as any)[k]);
@@ -424,6 +477,21 @@ function validateAll(): boolean {
     if (thresholdErrors.value.some((e) => e !== null)) valid = false;
   }
 
+  // Angle
+  const angleErr = validateRotationAngle(formData.angle ?? 0);
+  errors.angle = angleErr;
+  if (angleErr) valid = false;
+
+  // Width
+  const widthErr = validateNodeWidth(formData.width ?? 0);
+  errors.width = widthErr;
+  if (widthErr) valid = false;
+
+  // Height
+  const heightErr = validateNodeHeight(formData.height ?? 0);
+  errors.height = heightErr;
+  if (heightErr) valid = false;
+
   return valid;
 }
 
@@ -438,6 +506,13 @@ function handleSave() {
 
   try {
     applyFormDataToNode(node, formData);
+    if (formData.angle !== undefined) {
+      // X6 v2: no setAngle — use rotate() with absolute:true to set absolute angle
+      (node as any).rotate(formData.angle, { absolute: true });
+    }
+    if (formData.width !== undefined && formData.height !== undefined) {
+      (node as any).setSize({ width: formData.width, height: formData.height });
+    }
     initialFormData.value = deepCopy(formData);
     isSaved.value = true;
     errorToast.value = null;

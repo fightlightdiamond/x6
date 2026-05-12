@@ -96,13 +96,13 @@ const contextMenu = reactive({
   y: 0,
   nodeIds: [] as string[],
 });
-
 function closeContextMenu() {
   contextMenu.visible = false;
   contextMenu.nodeIds = [];
 }
 
 function onContainerClick() {
+  // Only close context menu on container click; blank:click handles icon hiding
   if (contextMenu.visible) closeContextMenu();
 }
 
@@ -122,7 +122,6 @@ const handleImport = (e: Event) => {
 // Task 6.3: node:click → set active layer
 function onNodeClick({ node, e }: { node: any; e: MouseEvent }) {
   nodeConfigStore.openPanel(node.id);
-  // Highlight the layer this node belongs to
   const layerId = layerStore.getLayerOfNode(node.id);
   if (layerId) {
     layerStore.setActiveLayer(layerId);
@@ -130,7 +129,7 @@ function onNodeClick({ node, e }: { node: any; e: MouseEvent }) {
 }
 
 // Task 6.1: node:contextmenu → show context menu
-function onNodeContextMenu({ node, e }: { node: any; e: MouseEvent }) {
+function onNodeContextMenu({ node, e }: { node: Node; e: MouseEvent }) {
   e.preventDefault();
   contextMenu.nodeIds = [node.id];
   contextMenu.x = e.clientX;
